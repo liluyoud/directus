@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/Qute.Console/.env
+/Qute.PWA/wwwroot/appsettings.json
+/Qute.View/wwwroot/appsettings.json
