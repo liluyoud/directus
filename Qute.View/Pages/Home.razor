@@ -1,0 +1,147 @@
+@page "/"
+@inject Qute.Directus.DirectusClient Directus
+
+<PageTitle>Qute View — Início</PageTitle>
+
+@if (_loading)
+{
+    <div class="page-loader">
+        <div class="loader-spinner"></div>
+        <p>Carregando dados...</p>
+    </div>
+}
+else if (_error is not null)
+{
+    <div class="error-banner">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="error-banner-icon">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <div>
+            <strong>Não foi possível conectar ao Directus</strong>
+            <p>@_error</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="page-animate">
+        <header class="page-header">
+            <h1>Bem-vindo, @(_user?.FirstName ?? "Usuário") 👋</h1>
+            <p class="page-subtitle">Aqui está um resumo da sua conta no Directus.</p>
+        </header>
+
+        <div class="cards-grid">
+            <div class="stat-card">
+                <div class="stat-icon icon-purple">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </div>
+                <div class="stat-body">
+                    <span class="stat-label">Nome completo</span>
+                    <span class="stat-value">@(_user?.FirstName) @(_user?.LastName)</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon icon-cyan">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                </div>
+                <div class="stat-body">
+                    <span class="stat-label">E-mail</span>
+                    <span class="stat-value">@(_user?.Email ?? "—")</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon icon-amber">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                </div>
+                <div class="stat-body">
+                    <span class="stat-label">Status</span>
+                    <span class="badge @(_user?.Status == "active" ? "badge-success" : "badge-warn")">
+                        @(_user?.Status ?? "—")
+                    </span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon icon-green">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                </div>
+                <div class="stat-body">
+                    <span class="stat-label">Último acesso</span>
+                    <span class="stat-value">@(_user?.LastAccess?.ToString("dd/MM/yyyy HH:mm") ?? "—")</span>
+                </div>
+            </div>
+        </div>
+
+        <section class="detail-card">
+            <h2>Detalhes da conta</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">ID</span>
+                    <span class="detail-value mono">@(_user?.Id ?? "—")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Provedor</span>
+                    <span class="detail-value">@(_user?.Provider ?? "default")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Idioma</span>
+                    <span class="detail-value">@(_user?.Language ?? "—")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Aparência</span>
+                    <span class="detail-value">@(_user?.Appearance ?? "auto")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Cargo</span>
+                    <span class="detail-value">@(_user?.Title ?? "—")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Localização</span>
+                    <span class="detail-value">@(_user?.Location ?? "—")</span>
+                </div>
+            </div>
+        </section>
+    </div>
+}
+
+@code {
+    private Qute.Directus.Models.Users.DirectusUser? _user;
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _user = await Directus.Users.GetCurrentAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Qute.Console/Qute.Console.csproj" />
+  <Project Path="Qute.Directus/Qute.Directus.csproj" />
+  <Project Path="Qute.PWA/Qute.PWA.csproj" />
+  <Project Path="Qute.View/Qute.View.csproj" />
+</Solution>

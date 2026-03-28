@@ -1,0 +1,122 @@
+@page "/profile"
+@inject Qute.Directus.DirectusClient Directus
+
+<PageTitle>Qute View — Perfil</PageTitle>
+
+@if (_loading)
+{
+    <div class="page-loader">
+        <div class="loader-spinner"></div>
+        <p>Carregando perfil...</p>
+    </div>
+}
+else if (_user is not null)
+{
+    <div class="page-animate">
+        <header class="page-header">
+            <h1>Meu Perfil</h1>
+            <p class="page-subtitle">Informações da sua conta no Directus.</p>
+        </header>
+
+        <div class="profile-hero">
+            <div class="profile-avatar">
+                @((_user.FirstName ?? "?").Substring(0, 1).ToUpper())
+            </div>
+            <div class="profile-info">
+                <h2>@(_user.FirstName) @(_user.LastName)</h2>
+                <p>@(_user.Email)</p>
+                @if (_user.Title is not null)
+                {
+                    <span class="badge badge-accent">@_user.Title</span>
+                }
+            </div>
+        </div>
+
+        <section class="detail-card">
+            <h2>Dados pessoais</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Nome</span>
+                    <span class="detail-value">@(_user.FirstName ?? "—")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Sobrenome</span>
+                    <span class="detail-value">@(_user.LastName ?? "—")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">E-mail</span>
+                    <span class="detail-value">@(_user.Email ?? "—")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Localização</span>
+                    <span class="detail-value">@(_user.Location ?? "—")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Descrição</span>
+                    <span class="detail-value">@(_user.Description ?? "—")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Tags</span>
+                    <span class="detail-value">
+                        @if (_user.Tags is { Count: > 0 })
+                        {
+                            @string.Join(", ", _user.Tags)
+                        }
+                        else
+                        {
+                            <text>—</text>
+                        }
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <section class="detail-card">
+            <h2>Configurações</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Aparência</span>
+                    <span class="detail-value">@(_user.Appearance ?? "auto")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Idioma</span>
+                    <span class="detail-value">@(_user.Language ?? "—")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Notificações por e-mail</span>
+                    <span class="detail-value">@(_user.EmailNotifications == true ? "Ativadas" : "Desativadas")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Tema claro</span>
+                    <span class="detail-value">@(_user.ThemeLight ?? "padrão")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Tema escuro</span>
+                    <span class="detail-value">@(_user.ThemeDark ?? "padrão")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Provedor de autenticação</span>
+                    <span class="detail-value">@(_user.Provider ?? "default")</span>
+                </div>
+            </div>
+        </section>
+    </div>
+}
+
+@code {
+    private Qute.Directus.Models.Users.DirectusUser? _user;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _user = await Directus.Users.GetCurrentAsync();
+        }
+        catch { /* silently fail — home page shows the error */ }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

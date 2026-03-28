@@ -1,0 +1,113 @@
+@page "/"
+@attribute [Authorize]
+@inject DirectusAuthStateProvider AuthProvider
+
+<PageTitle>Qute — Dashboard</PageTitle>
+
+<div class="dashboard">
+    <header class="dashboard-header">
+        <div>
+            <h1 class="dashboard-title">Dashboard</h1>
+            <p class="dashboard-subtitle">Bem-vindo de volta, @(_user?.FirstName ?? "Usuário")!</p>
+        </div>
+    </header>
+
+    <div class="cards-grid">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+            </div>
+            <div class="stat-content">
+                <span class="stat-label">Usuário</span>
+                <span class="stat-value">@(_user?.FirstName) @(_user?.LastName)</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #06b6d4, #0ea5e9);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                    <line x1="8" y1="21" x2="16" y2="21"/>
+                    <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+            </div>
+            <div class="stat-content">
+                <span class="stat-label">E-mail</span>
+                <span class="stat-value">@(_user?.Email ?? "—")</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+            </div>
+            <div class="stat-content">
+                <span class="stat-label">Status</span>
+                <span class="stat-value status-badge @(_user?.Status == "active" ? "active" : "inactive")">
+                    @(_user?.Status ?? "—")
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+            </div>
+            <div class="stat-content">
+                <span class="stat-label">Último acesso</span>
+                <span class="stat-value">@(_user?.LastAccess?.ToString("dd/MM/yyyy HH:mm") ?? "—")</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h2>Informações da Conta</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">ID</span>
+                <span class="info-value">@(_user?.Id ?? "—")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Provedor</span>
+                <span class="info-value">@(_user?.Provider ?? "default")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Idioma</span>
+                <span class="info-value">@(_user?.Language ?? "—")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Aparência</span>
+                <span class="info-value">@(_user?.Appearance ?? "auto")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Cargo</span>
+                <span class="info-value">@(_user?.Title ?? "—")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Localização</span>
+                <span class="info-value">@(_user?.Location ?? "—")</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private Qute.Directus.Models.Users.DirectusUser? _user;
+
+    protected override void OnInitialized()
+    {
+        _user = AuthProvider.CurrentUser;
+    }
+}
