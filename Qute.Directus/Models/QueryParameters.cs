@@ -57,7 +57,7 @@ public sealed class QueryParameters
 
     /// <summary>
     /// Use a raw query string instead of the fluent builder.
-    /// Accepts either "a=1&b=2" or "?a=1&b=2" — stored without the leading '?'.
+    /// Accepts either "a=1" or "?a=1" — stored without the leading '?'.
     /// When defined, <see cref="ToQueryString"/> returns this value verbatim.
     /// </summary>
     public QueryParameters Raw(string raw)
