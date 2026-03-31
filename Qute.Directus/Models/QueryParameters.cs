@@ -10,7 +10,7 @@ namespace Qute.Directus.Models;
 public sealed class QueryParameters
 {
     private string? _raw;
-    private string[]? _fields;
+    private List<string>? _fields;
     private object? _filter;
     private string[]? _sort;
     private int? _limit;
@@ -23,7 +23,15 @@ public sealed class QueryParameters
     private readonly Dictionary<string, string> _extra = new();
 
     /// <summary>Control what fields are returned in the response.</summary>
-    public QueryParameters Fields(params string[] fields) { _fields = fields; return this; }
+    public QueryParameters Fields(params string[] fields)
+    {
+        if (fields == null || fields.Length == 0)
+            return this;
+
+        _fields ??= new List<string>();
+        _fields.AddRange(fields);
+        return this;
+    }
 
     /// <summary>Select items matching the given filter conditions.</summary>
     public QueryParameters Filter(object filter) { _filter = filter; return this; }
@@ -79,7 +87,7 @@ public sealed class QueryParameters
 
         var parts = new List<string>();
 
-        if (_fields is { Length: > 0 })
+        if (_fields != null && _fields.Count > 0)
             parts.Add($"fields={HttpUtility.UrlEncode(string.Join(",", _fields))}");
 
         if (_filter is not null)
