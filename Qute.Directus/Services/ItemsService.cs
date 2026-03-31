@@ -32,6 +32,14 @@ public sealed class ItemsService
     public Task<T> GetByIdAsync<T>(string collection, string id, QueryParameters? query = null, CancellationToken ct = default)
         => _http.GetAsync<T>($"items/{collection}/{id}", query, ct);
 
+    /// <summary>Retrieve a single item by ID using a query builder.</summary>
+    public Task<T> GetByIdAsync<T>(string collection, string id, Action<QueryParameters> configure, CancellationToken ct = default)
+    {
+        var q = new QueryParameters();
+        configure(q);
+        return GetByIdAsync<T>(collection, id, q, ct);
+    }
+
     /// <summary>Retrieve a singleton item.</summary>
     public Task<T> GetSingletonAsync<T>(string collection, QueryParameters? query = null, CancellationToken ct = default)
         => _http.GetAsync<T>($"items/{collection}/singleton", query, ct);
@@ -45,6 +53,10 @@ public sealed class ItemsService
     /// <summary>Retrieve a single item by ID as a dynamic JSON object.</summary>
     public Task<JsonElement> GetByIdAsync(string collection, string id, QueryParameters? query = null, CancellationToken ct = default)
         => GetByIdAsync<JsonElement>(collection, id, query, ct);
+
+    /// <summary>Retrieve a single item by ID as a dynamic JSON object using a query builder.</summary>
+    public Task<JsonElement> GetByIdAsync(string collection, string id, Action<QueryParameters> configure, CancellationToken ct = default)
+        => GetByIdAsync<JsonElement>(collection, id, configure, ct);
 
     // ─── Create ────────────────────────────────────────────────────────
 

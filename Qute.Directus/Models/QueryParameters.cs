@@ -62,7 +62,7 @@ public sealed class QueryParameters
     /// </summary>
     public QueryParameters Raw(string raw)
     {
-        _raw = string.IsNullOrEmpty(raw) ? null : raw.TrimStart('?');
+        _raw = string.IsNullOrEmpty(raw) ? null : raw.Trim();
         return this;
     }
 
@@ -74,6 +74,9 @@ public sealed class QueryParameters
     /// </summary>
     public string ToQueryString()
     {
+        if (!string.IsNullOrEmpty(_raw))
+            return _raw;
+
         var parts = new List<string>();
 
         if (_fields is { Length: > 0 })
@@ -114,7 +117,7 @@ public sealed class QueryParameters
 
         foreach (var (key, value) in _extra)
             parts.Add($"{HttpUtility.UrlEncode(key)}={HttpUtility.UrlEncode(value)}");
-
+            
         return string.Join("&", parts);
     }
 

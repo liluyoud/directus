@@ -1,6 +1,8 @@
 @page "/"
 @attribute [Authorize]
 @inject DirectusAuthStateProvider AuthProvider
+@inject DirectusClient Directus
+@inject ILogger<Home> Logger
 
 <PageTitle>Qute — Dashboard</PageTitle>
 
@@ -105,9 +107,21 @@
 
 @code {
     private Qute.Directus.Models.Users.DirectusUser? _user;
+    private System.Text.Json.JsonElement? _json;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         _user = AuthProvider.CurrentUser;
+        Logger.LogInformation($"Dados brutos do usuário: {_user?.FirstName}");
+        if (_user != null && _user.Id != null)
+        {
+            var query = new Qute.Directus.Models.QueryParameters();
+            query.Fields("id, nome");
+
+            // _json = await Directus.Items.GetByIdAsync("acoes", "300211", q => q.Fields("*,municipio.*"));
+            // _json = await Directus.Items.GetByIdAsync("acoes", "300211", q => q.Raw("fields=id,nome"));
+            _json = await Directus.Items.GetByIdAsync("acoes", "300211", Qute.Directus.Models.QueryParameters.FromRaw("fields=id,nome"));
+            Logger.LogInformation($"Dados brutos do usuário: {_json.ToString()}");
+        }
     }
-}
+}   
