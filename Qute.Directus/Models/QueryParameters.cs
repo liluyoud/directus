@@ -11,7 +11,7 @@ public sealed class QueryParameters
 {
     private string? _raw;
     private List<string>? _fields;
-    private object? _filter;
+    private List<object>? _filters;
     private string[]? _sort;
     private int? _limit;
     private int? _offset;
@@ -33,8 +33,39 @@ public sealed class QueryParameters
         return this;
     }
 
-    /// <summary>Select items matching the given filter conditions.</summary>
-    public QueryParameters Filter(object filter) { _filter = filter; return this; }
+    /// <summary>
+    /// Select items matching the given filter condition.
+    /// Calling this (or <see cref="Where"/>) more than once combines every condition with a logical AND
+    /// — there is no need to hand-build an <c>_and</c> filter yourself.
+    /// </summary>
+    public QueryParameters Filter(object filter)
+    {
+        _filters ??= new List<object>();
+        _filters.Add(filter);
+        return this;
+    }
+
+    /// <summary>
+    /// Shorthand for an equality filter on a single field (<c>{ field: { _eq: value } }</c>).
+    /// Composes with other <see cref="Filter"/>/<see cref="Where"/> calls via AND.
+    /// </summary>
+    public QueryParameters Where(string field, object? value)
+        => Filter(new Dictionary<string, object?> { [field] = new Dictionary<string, object?> { ["_eq"] = value } });
+
+    /// <summary>
+    /// Excludes archived items, assuming the Directus 12+ convention of a boolean <c>archived</c> field
+    /// (the default suggested for new collections in the Data Studio). Composes via AND.
+    /// </summary>
+    public QueryParameters NotArchived(string field = "archived") => Where(field, false);
+
+    /// <summary>Selects only archived items. See <see cref="NotArchived"/>.</summary>
+    public QueryParameters OnlyArchived(string field = "archived") => Where(field, true);
+
+    /// <summary>
+    /// Filters by a string <c>status</c> field — the convention used by collections created before Directus 12.
+    /// For collections created on Directus 12+, prefer <see cref="NotArchived"/>/<see cref="OnlyArchived"/>.
+    /// </summary>
+    public QueryParameters WithStatus(string status, string field = "status") => Where(field, status);
 
     /// <summary>Sort the returned items. Prefix with <c>-</c> for descending order.</summary>
     public QueryParameters Sort(params string[] sort) { _sort = sort; return this; }
@@ -90,9 +121,13 @@ public sealed class QueryParameters
         if (_fields != null && _fields.Count > 0)
             parts.Add($"fields={HttpUtility.UrlEncode(string.Join(",", _fields))}");
 
-        if (_filter is not null)
+        if (_filters is { Count: > 0 })
         {
-            var filterJson = JsonSerializer.Serialize(_filter, Serialization.DirectusJsonOptions.Default);
+            object filterPayload = _filters.Count == 1
+                ? _filters[0]
+                : new Dictionary<string, object> { ["_and"] = _filters };
+
+            var filterJson = JsonSerializer.Serialize(filterPayload, Serialization.DirectusJsonOptions.Default);
             parts.Add($"filter={HttpUtility.UrlEncode(filterJson)}");
         }
 

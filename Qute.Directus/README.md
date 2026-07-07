@@ -27,9 +27,32 @@ await client.Auth.LoginAsync("admin@example.com", "password");
 // Query items
 var articles = await client.Items.GetManyAsync<Article>("articles", q => q
     .Fields("id", "title", "content")
-    .Filter(new { status = new { _eq = "published" } })
+    .NotArchived()
+    .Where("category", "news")
     .Sort("-date_created")
     .Limit(25));
+```
+
+> **Directus 12 note:** new collections default to a boolean `archived` field instead of the
+> old string `status` field. `NotArchived()`/`OnlyArchived()` target that convention; existing
+> collections created before Directus 12 keep working via `WithStatus("published")`. Chaining
+> `Filter`/`Where`/`NotArchived`/`WithStatus` combines every condition with a logical AND.
+
+### Modeling collection items
+
+Inherit from `DirectusItem` (UUID primary key) or `DirectusItem<TKey>` (e.g. `DirectusItem<int>`
+for auto-increment collections) to pick up the system fields Directus tracks on every collection —
+`id`, `sort`, `date_created`, `date_updated`, `user_created`, `user_updated` — without redeclaring them:
+
+```csharp
+using Qute.Directus.Models.Items;
+
+public record Article : DirectusItem
+{
+    public string? Title { get; init; }
+    public string? Content { get; init; }
+    public bool? Archived { get; init; }
+}
 ```
 
 ### With Dependency Injection

@@ -120,6 +120,7 @@
 
             // _json = await Directus.Items.GetByIdAsync("acoes", "300211", q => q.Fields("*,municipio.*"));
             // _json = await Directus.Items.GetByIdAsync("acoes", "300211", q => q.Raw("fields=id,nome"));
+            // Directus 12+: q => q.Fields("*,municipio.*").NotArchived() exclui itens arquivados (campo booleano "archived")
             _json = await Directus.Items.GetByIdAsync("acoes", "300211", Qute.Directus.Models.QueryParameters.FromRaw("fields=id,nome"));
             Logger.LogInformation($"Dados brutos do usuário: {_json.ToString()}");
         }
