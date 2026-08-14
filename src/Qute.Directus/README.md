@@ -445,6 +445,12 @@ services.AddDirectus(options =>
 
 ## Versioning and breaking changes
 
+### v11.0.1
+
+Bug fix, no breaking changes:
+
+- **`DirectusListResponse<T>` deserialization was broken.** Because the type implements `IReadOnlyList<T>` (for the ergonomic enumeration/indexing described above), `System.Text.Json`'s default reflection-based resolution treated it as a JSON array and ignored its `data`/`meta` properties entirely — every list-returning call (`Items.GetManyAsync`, `Files.GetManyAsync`, etc.) threw `JsonException: The JSON value could not be converted to ... DirectusListResponse\`1[...]` on any real response. A dedicated `JsonConverter` (`Serialization/DirectusListResponseConverter.cs`) now handles `DirectusListResponse<T>` explicitly, restoring correct `{ "data": [...], "meta": {...} }` (de)serialization.
+
 ### v11.0.0
 
 Breaking behavior changes — see [`.docs/specs-001.md`](../.docs/specs-001.md) for the full rationale:

@@ -31,6 +31,7 @@ public static class DirectusJsonOptions
         };
 
         options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower));
+        options.Converters.Add(new DirectusListResponseConverterFactory());
 
         return options;
     }

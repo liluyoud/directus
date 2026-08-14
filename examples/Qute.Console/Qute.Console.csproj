@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Qute.Directus\Qute.Directus.csproj" />
+    <ProjectReference Include="..\..\src\Qute.Directus\Qute.Directus.csproj" />
   </ItemGroup>
 
   <ItemGroup>
