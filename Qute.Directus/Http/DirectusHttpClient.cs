@@ -140,8 +140,11 @@ public sealed class DirectusHttpClient
         return await ReadResponseAsync<T>(response, ct);
     }
 
-    /// <summary>Sends a raw POST and returns the full response for manual handling (e.g., login).</summary>
-    public async Task<TResponse> PostRawAsync<TResponse>(string path, object? body = null, CancellationToken ct = default)
+    /// <summary>
+    /// Sends a POST without an Authorization header and returns <c>{ "data": T }</c>
+    /// (used for login/refresh, where no access token exists yet).
+    /// </summary>
+    public async Task<TResponse> PostUnauthenticatedAsync<TResponse>(string path, object? body = null, CancellationToken ct = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, path);
         SetJsonBody(request, body);
@@ -151,7 +154,7 @@ public sealed class DirectusHttpClient
         return await ReadResponseAsync<TResponse>(response, ct);
     }
 
-    /// <summary>Sends a POST with auth and returns <c>{ "data": T }</c>.</summary>
+    /// <summary>Sends an authenticated POST and returns <c>{ "data": T }</c> without going through <see cref="BuildUrl"/> (no query parameters).</summary>
     public async Task<TResponse> PostAuthenticatedRawAsync<TResponse>(string path, object? body = null, CancellationToken ct = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, path);
@@ -291,7 +294,7 @@ public sealed class DirectusHttpClient
         await EnsureSuccessAsync(response, ct);
 
         var wrapper = await response.Content.ReadFromJsonAsync<DirectusListResponse<T>>(DirectusJsonOptions.Default, ct);
-        return wrapper ?? new DirectusListResponse<T>();
+        return wrapper ?? throw new DirectusException(response.StatusCode, "Response was null.");
     }
 
     private static async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken ct)

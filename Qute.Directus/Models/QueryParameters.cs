@@ -35,8 +35,8 @@ public sealed class QueryParameters
 
     /// <summary>
     /// Select items matching the given filter condition.
-    /// Calling this (or <see cref="Where"/>) more than once combines every condition with a logical AND
-    /// — there is no need to hand-build an <c>_and</c> filter yourself.
+    /// Calling this (or <see cref="Where"/> and the other <c>Where*</c> operator helpers) more than once
+    /// combines every condition with a logical AND — there is no need to hand-build an <c>_and</c> filter yourself.
     /// </summary>
     public QueryParameters Filter(object filter)
     {
@@ -45,12 +45,91 @@ public sealed class QueryParameters
         return this;
     }
 
+    /// <summary>Builds a single-operator filter fragment (<c>{ field: { op: value } }</c>) and adds it via <see cref="Filter"/>.</summary>
+    private QueryParameters Op(string field, string directusOperator, object? value)
+        => Filter(new Dictionary<string, object?> { [field] = new Dictionary<string, object?> { [directusOperator] = value } });
+
     /// <summary>
     /// Shorthand for an equality filter on a single field (<c>{ field: { _eq: value } }</c>).
     /// Composes with other <see cref="Filter"/>/<see cref="Where"/> calls via AND.
     /// </summary>
-    public QueryParameters Where(string field, object? value)
-        => Filter(new Dictionary<string, object?> { [field] = new Dictionary<string, object?> { ["_eq"] = value } });
+    public QueryParameters Where(string field, object? value) => Op(field, "_eq", value);
+
+    /// <summary>Filters where <paramref name="field"/> is not equal to <paramref name="value"/> (<c>_neq</c>).</summary>
+    public QueryParameters WhereNot(string field, object? value) => Op(field, "_neq", value);
+
+    /// <summary>Filters where <paramref name="field"/> is greater than <paramref name="value"/> (<c>_gt</c>).</summary>
+    public QueryParameters WhereGreaterThan(string field, object value) => Op(field, "_gt", value);
+
+    /// <summary>Filters where <paramref name="field"/> is greater than or equal to <paramref name="value"/> (<c>_gte</c>).</summary>
+    public QueryParameters WhereGreaterThanOrEqual(string field, object value) => Op(field, "_gte", value);
+
+    /// <summary>Filters where <paramref name="field"/> is less than <paramref name="value"/> (<c>_lt</c>).</summary>
+    public QueryParameters WhereLessThan(string field, object value) => Op(field, "_lt", value);
+
+    /// <summary>Filters where <paramref name="field"/> is less than or equal to <paramref name="value"/> (<c>_lte</c>).</summary>
+    public QueryParameters WhereLessThanOrEqual(string field, object value) => Op(field, "_lte", value);
+
+    /// <summary>Filters where <paramref name="field"/> is one of the given <paramref name="values"/> (<c>_in</c>).</summary>
+    public QueryParameters WhereIn(string field, params object[] values) => Op(field, "_in", values);
+
+    /// <summary>Filters where <paramref name="field"/> is none of the given <paramref name="values"/> (<c>_nin</c>).</summary>
+    public QueryParameters WhereNotIn(string field, params object[] values) => Op(field, "_nin", values);
+
+    /// <summary>Filters where <paramref name="field"/> contains <paramref name="value"/> as a substring, case-sensitive (<c>_contains</c>).</summary>
+    public QueryParameters WhereContains(string field, string value) => Op(field, "_contains", value);
+
+    /// <summary>Filters where <paramref name="field"/> contains <paramref name="value"/> as a substring, case-insensitive (<c>_icontains</c>).</summary>
+    public QueryParameters WhereIContains(string field, string value) => Op(field, "_icontains", value);
+
+    /// <summary>Filters where <paramref name="field"/> starts with <paramref name="value"/> (<c>_starts_with</c>).</summary>
+    public QueryParameters WhereStartsWith(string field, string value) => Op(field, "_starts_with", value);
+
+    /// <summary>Filters where <paramref name="field"/> ends with <paramref name="value"/> (<c>_ends_with</c>).</summary>
+    public QueryParameters WhereEndsWith(string field, string value) => Op(field, "_ends_with", value);
+
+    /// <summary>Filters where <paramref name="field"/> is <c>null</c> (<c>_null</c>).</summary>
+    public QueryParameters WhereNull(string field) => Op(field, "_null", true);
+
+    /// <summary>Filters where <paramref name="field"/> is not <c>null</c> (<c>_nnull</c>).</summary>
+    public QueryParameters WhereNotNull(string field) => Op(field, "_nnull", true);
+
+    /// <summary>Filters where <paramref name="field"/> is empty (empty string or empty array) (<c>_empty</c>).</summary>
+    public QueryParameters WhereEmpty(string field) => Op(field, "_empty", true);
+
+    /// <summary>Filters where <paramref name="field"/> is not empty (<c>_nempty</c>).</summary>
+    public QueryParameters WhereNotEmpty(string field) => Op(field, "_nempty", true);
+
+    /// <summary>Filters where <paramref name="field"/> is between <paramref name="from"/> and <paramref name="to"/>, inclusive (<c>_between</c>).</summary>
+    public QueryParameters WhereBetween(string field, object from, object to) => Op(field, "_between", new[] { from, to });
+
+    /// <summary>
+    /// Escape hatch for any Directus filter operator not covered by a named <c>Where*</c> method
+    /// (e.g. a future operator, or one specific to a custom field type).
+    /// </summary>
+    public QueryParameters WhereOperator(string field, string directusOperator, object? value) => Op(field, directusOperator, value);
+
+    /// <summary>
+    /// Combines every condition built inside <paramref name="configure"/> with a logical OR, then
+    /// composes that group with the rest of the filter via AND — exactly like chaining another
+    /// <see cref="Where"/> call. Nest calls to build arbitrarily deep <c>_and</c>/<c>_or</c> trees.
+    /// </summary>
+    /// <example>
+    /// <code>
+    /// q.Where("category", "news")
+    ///  .Or(o => o.Where("featured", true).WhereGreaterThan("views", 1000));
+    /// // => { "_and": [ {"category":{"_eq":"news"}},
+    /// //                {"_or": [{"featured":{"_eq":true}}, {"views":{"_gt":1000}}]} ] }
+    /// </code>
+    /// </example>
+    public QueryParameters Or(Action<QueryParameters> configure)
+    {
+        var sub = new QueryParameters();
+        configure(sub);
+        if (sub._filters is { Count: > 0 })
+            Filter(new Dictionary<string, object> { ["_or"] = sub._filters });
+        return this;
+    }
 
     /// <summary>
     /// Excludes archived items, assuming the Directus 12+ convention of a boolean <c>archived</c> field

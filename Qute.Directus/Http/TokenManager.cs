@@ -1,3 +1,4 @@
+using System.Net;
 using Qute.Directus.Models.Auth;
 using Qute.Directus.Serialization;
 using System.Text.Json;
@@ -14,11 +15,18 @@ public sealed class TokenManager : IDisposable
     private string? _refreshToken;
     private DateTime _expiresAt = DateTime.MinValue;
     private readonly int _bufferSeconds;
+    private readonly bool _autoRefresh;
     private Func<string, CancellationToken, Task<LoginResponse>>? _refreshFunc;
 
-    public TokenManager(int bufferSeconds = 30)
+    /// <param name="bufferSeconds">Seconds before expiry to trigger a refresh.</param>
+    /// <param name="autoRefresh">
+    /// When <c>false</c> (mirrors <see cref="Qute.Directus.DirectusOptions.AutoRefreshToken"/>), an expired token is
+    /// returned as-is instead of being refreshed — the caller is expected to handle the resulting 401.
+    /// </param>
+    public TokenManager(int bufferSeconds = 30, bool autoRefresh = true)
     {
         _bufferSeconds = bufferSeconds;
+        _autoRefresh = autoRefresh;
     }
 
     /// <summary>Whether a valid (or refreshable) session exists.</summary>
@@ -53,8 +61,14 @@ public sealed class TokenManager : IDisposable
     }
 
     /// <summary>
-    /// Gets the current access token, refreshing it automatically if expired or about to expire.
+    /// Gets the current access token, refreshing it automatically if expired or about to expire
+    /// (unless <c>autoRefresh</c> was set to <c>false</c>).
     /// </summary>
+    /// <exception cref="DirectusException">
+    /// The token is expired, <c>autoRefresh</c> is enabled, but no refresh token/function is configured
+    /// (e.g. no login has happened yet). This never happens when authenticating via
+    /// <see cref="Qute.Directus.DirectusOptions.StaticToken"/>, since that bypasses this class entirely.
+    /// </exception>
     public async Task<string?> GetAccessTokenAsync(CancellationToken cancellationToken = default)
     {
         if (_accessToken is null)
@@ -63,9 +77,12 @@ public sealed class TokenManager : IDisposable
         if (DateTime.UtcNow.AddSeconds(_bufferSeconds) < _expiresAt)
             return _accessToken;
 
-        // Token is expired or about to expire: attempt refresh
-        if (_refreshToken is null || _refreshFunc is null)
+        // Token is expired or about to expire.
+        if (!_autoRefresh)
             return _accessToken;
+
+        if (_refreshToken is null || _refreshFunc is null)
+            throw new DirectusException(HttpStatusCode.Unauthorized, "Access token expired and no refresh is configured.");
 
         await _semaphore.WaitAsync(cancellationToken);
         try

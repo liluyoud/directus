@@ -21,3 +21,19 @@ public abstract record DirectusItem<TKey>
 
 /// <summary>Shorthand for collections using the default Directus UUID primary key.</summary>
 public abstract record DirectusItem : DirectusItem<string>;
+
+/// <summary>
+/// Like <see cref="DirectusItem{TKey}"/>, but also declares the boolean <c>archived</c> field
+/// introduced by the Directus 12+ Data Studio convention. Use this base for collections that use
+/// that convention, and query them with <see cref="Qute.Directus.Models.QueryParameters.NotArchived"/>/
+/// <see cref="Qute.Directus.Models.QueryParameters.OnlyArchived"/>. For collections created before Directus 12 that still
+/// use a string <c>status</c> field, inherit from <see cref="DirectusItem{TKey}"/> instead and declare
+/// your own <c>Status</c> property.
+/// </summary>
+public abstract record ArchivableDirectusItem<TKey> : DirectusItem<TKey>
+{
+    public bool? Archived { get; init; }
+}
+
+/// <summary>Shorthand for <see cref="ArchivableDirectusItem{TKey}"/> using the default Directus UUID primary key.</summary>
+public abstract record ArchivableDirectusItem : ArchivableDirectusItem<string>;

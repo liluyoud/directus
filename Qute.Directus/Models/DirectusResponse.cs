@@ -1,3 +1,5 @@
+using System.Collections;
+
 namespace Qute.Directus.Models;
 
 /// <summary>
@@ -11,11 +13,18 @@ public record DirectusResponse<T>
 
 /// <summary>
 /// Generic wrapper for a list Directus API response: <c>{ "data": [T], "meta": {} }</c>.
+/// Implements <see cref="IReadOnlyList{T}"/> so it can be enumerated/indexed directly
+/// (e.g. <c>foreach (var item in response)</c>) without going through <see cref="Data"/>.
 /// </summary>
-public record DirectusListResponse<T>
+public record DirectusListResponse<T> : IReadOnlyList<T>
 {
     public List<T> Data { get; init; } = [];
     public ResponseMeta? Meta { get; init; }
+
+    public int Count => Data.Count;
+    public T this[int index] => Data[index];
+    public IEnumerator<T> GetEnumerator() => Data.GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
 
 /// <summary>

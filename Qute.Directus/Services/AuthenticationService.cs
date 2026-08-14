@@ -34,7 +34,7 @@ public sealed class AuthenticationService
             Otp = otp
         };
 
-        var response = await _http.PostRawAsync<LoginResponse>("auth/login", request, ct);
+        var response = await _http.PostUnauthenticatedAsync<LoginResponse>("auth/login", request, ct);
         _tokenManager.SetTokens(response.AccessToken, response.RefreshToken, response.Expires);
         return response;
     }
@@ -93,6 +93,6 @@ public sealed class AuthenticationService
     private async Task<LoginResponse> RefreshInternalAsync(string refreshToken, CancellationToken ct)
     {
         var request = new RefreshRequest { RefreshToken = refreshToken, Mode = "json" };
-        return await _http.PostRawAsync<LoginResponse>("auth/refresh", request, ct);
+        return await _http.PostUnauthenticatedAsync<LoginResponse>("auth/refresh", request, ct);
     }
 }

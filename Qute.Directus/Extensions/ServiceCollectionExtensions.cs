@@ -31,7 +31,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<TokenManager>(sp =>
         {
             var options = sp.GetRequiredService<IOptions<DirectusOptions>>().Value;
-            return new TokenManager(options.TokenRefreshBufferSeconds);
+            return new TokenManager(options.TokenRefreshBufferSeconds, options.AutoRefreshToken);
         });
 
         services.AddHttpClient<DirectusHttpClient>((sp, client) =>

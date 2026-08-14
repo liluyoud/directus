@@ -70,7 +70,7 @@ public sealed class DirectusClient : IDisposable
     /// </summary>
     public DirectusClient(DirectusOptions options)
     {
-        _tokenManager = new TokenManager(options.TokenRefreshBufferSeconds);
+        _tokenManager = new TokenManager(options.TokenRefreshBufferSeconds, options.AutoRefreshToken);
         _ownedHttpClient = new HttpClient { BaseAddress = options.GetBaseUri() };
         _http = new DirectusHttpClient(_ownedHttpClient, _tokenManager, options);
     }
@@ -80,7 +80,7 @@ public sealed class DirectusClient : IDisposable
     /// </summary>
     public DirectusClient(HttpClient httpClient, DirectusOptions options)
     {
-        _tokenManager = new TokenManager(options.TokenRefreshBufferSeconds);
+        _tokenManager = new TokenManager(options.TokenRefreshBufferSeconds, options.AutoRefreshToken);
         _http = new DirectusHttpClient(httpClient, _tokenManager, options);
     }
 

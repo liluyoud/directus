@@ -1,6 +1,8 @@
+using System.Reflection;
 using System.Text.Json;
 using Qute.Directus.Http;
 using Qute.Directus.Models;
+using Qute.Directus.Models.Items;
 
 namespace Qute.Directus.Services;
 
@@ -13,6 +15,23 @@ public sealed class ItemsService
     private readonly DirectusHttpClient _http;
 
     public ItemsService(DirectusHttpClient http) => _http = http;
+
+    /// <summary>
+    /// Returns a client scoped to the Directus collection declared on <typeparamref name="T"/>
+    /// via <see cref="DirectusCollectionAttribute"/>, so calls don't need to repeat the collection name.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// <typeparamref name="T"/> has no <see cref="DirectusCollectionAttribute"/>. Use the string-based
+    /// methods on this service directly instead.
+    /// </exception>
+    public DirectusCollectionClient<T> Of<T>() where T : class
+    {
+        var attr = typeof(T).GetCustomAttribute<DirectusCollectionAttribute>()
+            ?? throw new InvalidOperationException(
+                $"'{typeof(T).Name}' has no [DirectusCollection] attribute. " +
+                $"Either add one or use the string-based ItemsService methods directly.");
+        return new DirectusCollectionClient<T>(this, attr.Name);
+    }
 
     // ─── Read ──────────────────────────────────────────────────────────
 
